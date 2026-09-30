@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6d35c5">
+<title>ICONIC SHOP</title>
+<style>
+:root{--purple:#6d35c5;--deep:#5425a5;--pale:#f3edff;--ink:#241b35;--muted:#766d83;--line:#eee8f7}
+*{box-sizing:border-box}body{margin:0;background:#faf8ff;color:var(--ink);font:15px system-ui,-apple-system,sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}.app{max-width:520px;margin:auto;min-height:100vh;background:#fff;box-shadow:0 0 30px #241b350b;padding-bottom:76px}.top{padding:18px 16px 12px;background:linear-gradient(135deg,#f7f2ff,#fff)}.brand{display:flex;align-items:center;gap:10px}.logo{width:44px;height:44px;border-radius:15px;background:var(--purple);color:white;display:grid;place-items:center;font-size:23px}.brand h1{margin:0;color:var(--deep);font-size:21px;letter-spacing:.3px}.tag{font-size:12px;color:var(--muted)}.search{display:flex;gap:8px;margin-top:16px}.search input{width:100%;border:1px solid var(--line);border-radius:14px;padding:13px;background:white;outline-color:var(--purple)}.section{padding:15px 16px}.heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.heading h2{font-size:18px;margin:0}.hint{font-size:12px;color:var(--muted)}.banner{background:linear-gradient(120deg,#6d35c5,#9b72e5);color:white;border-radius:20px;padding:20px;display:flex;justify-content:space-between;align-items:center;overflow:hidden}.banner h2{font-size:22px;line-height:1.15;margin:0 0 8px}.banner p{margin:0;font-size:12px;opacity:.9}.banner .spark{font-size:55px}.cats{display:flex;gap:10px;overflow:auto;padding-bottom:3px}.cat{flex:0 0 76px;text-align:center;border:1px solid var(--line);border-radius:15px;padding:11px 5px;background:#fff;color:var(--ink)}.cat .emoji{font-size:25px;display:block;margin-bottom:5px}.cat span:last-child{font-size:11px}.products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.product{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:white}.pic{height:170px;background:var(--pale);display:grid;place-items:center;overflow:hidden}.pic img{width:100%;height:100%;object-fit:cover;display:block}.cart-thumb{width:64px;height:64px;object-fit:cover;border-radius:10px;background:var(--pale);flex-shrink:0}.pinfo{padding:10px}.pname{font-weight:650;font-size:14px}.desc{font-size:11px;color:var(--muted);margin:4px 0 8px}.price-row{display:flex;align-items:center;justify-content:space-between;gap:5px}.price{font-weight:750;color:var(--deep)}.add{border:0;background:var(--purple);color:white;border-radius:10px;padding:7px 11px;font-size:12px}.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);display:flex;justify-content:space-around;background:#fff;border-top:1px solid var(--line);padding:9px 5px max(9px,env(safe-area-inset-bottom));z-index:5}.nav button{border:0;background:white;color:var(--muted);font-size:11px;display:grid;gap:3px;justify-items:center;min-width:60px}.nav button b{font-size:20px;font-weight:500}.nav button.active{color:var(--purple)}.pill{background:#eee3ff;border-radius:20px;padding:4px 8px;font-size:11px;color:var(--deep)}.empty{text-align:center;padding:38px 12px;color:var(--muted)}.primary{border:0;background:var(--purple);color:#fff;border-radius:12px;padding:12px 16px;width:100%;margin-top:12px}.field{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;margin:7px 0 12px}.notice{font-size:12px;background:#f7f2ff;padding:11px;border-radius:12px;color:#5b4580;line-height:1.45}.hidden{display:none!important}
+</style></head>
+<body><main class="app">
+<header class="top"><div class="brand"><div class="logo">🛍️</div><div><h1>ICONIC SHOP</h1><div class="tag">Your Shopping, Your Style 💜</div></div><div style="margin-left:auto" class="pill">DEMO</div></div><div class="search"><input id="search" placeholder="Search clothes, beauty, electronics…" aria-label="Search products"></div></header>
+<section class="section" id="home">
+<div class="banner"><div><div class="pill" style="background:#ffffff30;color:white;margin-bottom:10px">WELCOME TO ICONIC</div><h2>Find your<br>everyday favourites</h2><p>Explore products across every category.</p></div><div class="spark">✨</div></div>
+<div class="section" style="padding:20px 0 4px"><div class="heading"><h2>Shop by category</h2><span class="hint">Explore</span></div><div class="cats" id="cats"></div></div>
+<div class="section" style="padding:17px 0 0"><div class="heading"><h2 id="productHeading">Popular picks</h2><span class="hint" id="count"></span></div><div class="products" id="products"></div></div>
+</section>
+<section class="section hidden" id="cartPage"><div class="heading"><h2>Your cart</h2><span class="pill" id="cartCount">0 items</span></div><div id="cartItems"></div><div id="cartTotal"></div></section>
+<section class="section hidden" id="ordersPage"><div class="heading"><h2>Your orders</h2><span class="pill" id="orderCount">0 orders</span></div><div id="ordersList"></div><div class="notice">Orders submitted successfully are sent to the shop owner's Telegram bot. Order history shown here is saved only in this browser. Manually verify each payment in your UPI/bank app before shipping.</div></section>
+<section class="section hidden" id="checkoutPage"><div class="heading"><h2>Delivery details</h2><span class="pill">Demo checkout</span></div><div class="notice">Fill in your delivery details to create a demo order. UPI is the only payment method shown, but real payment is not connected yet. Details stay in this browser only.</div><form id="checkoutForm"><label for="customerName">Full name</label><input class="field" id="customerName" required maxlength="80" placeholder="Enter your name"><label for="customerPhone">Mobile number</label><input class="field" id="customerPhone" required inputmode="numeric" maxlength="10" pattern="[6-9][0-9]{9}" placeholder="10-digit Indian mobile number"><label for="customerAddress">Delivery address</label><textarea class="field" id="customerAddress" required maxlength="500" rows="3" placeholder="House, street, area, city, PIN code"></textarea><label for="paymentMethod">UPI payment app</label><select class="field" id="paymentMethod" required><option value="Google Pay (demo only)">Google Pay</option><option value="PhonePe (demo only)">PhonePe</option><option value="Paytm (demo only)">Paytm</option></select><div class="notice">QR cart ke total ke liye hai. Payment karne ke baad apne UPI app ki transaction details se UTR / UPI reference number yahan daalo. Order tab tak pending rahega jab tak seller apne bank/UPI app mein payment verify na kar le. Screenshot ya entered reference akela payment proof nahi hota.</div><label for="paymentRef">UPI transaction ID / UTR</label><input class="field" id="paymentRef" required maxlength="80" placeholder="Payment ke baad UTR/reference number"><div id="checkoutSummary"></div><button class="primary" type="submit">Submit order for verification</button><button class="primary" type="button" style="background:#eee8f7;color:#5425a5" onclick="showPage('cartPage')">Back to cart</button></form></section>
+<section class="section hidden" id="accountPage"><h2>Your account</h2><p class="hint">Sign in screen preview</p><div class="notice">OTP sign-in is not connected yet. A real SMS authentication provider will be needed before real accounts can be created.</div><label for="phone">Mobile number</label><input class="field" id="phone" inputmode="numeric" maxlength="10" placeholder="Enter 10-digit mobile number"><button class="primary" onclick="demoLogin()">Continue</button><p id="loginMsg" class="hint"></p><div class="notice" style="margin-top:18px">Prototype mode: no SMS will be sent and no phone number is saved.</div></section>
+<nav class="nav"><button class="active" data-page="home"><b>⌂</b>Home</button><button data-page="cartPage"><b>🛒</b>Cart <span id="navCart">0</span></button><button data-page="ordersPage"><b>▤</b>Orders</button><button data-page="accountPage"><b>♙</b>Account</button></nav>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const UPI_ID="anjalime1100@axl";
+const UPI_NAME="ICONIC SHOP";
+const categories=[['All','✨'],['Fashion','👗'],['Beauty','💄'],['Electronics','🎧'],['Home','🏠'],['Shoes','👟'],['Accessories','👜']];
+const items=[
+{id:1,name:'Everyday Tote Bag',category:'Fashion',price:399,emoji:'👜',image:'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=85',desc:'Lightweight • Everyday style'},
+{id:2,name:'Soft Glow Makeup Set',category:'Beauty',price:549,emoji:'💄',image:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=85',desc:'Beauty essentials • Demo item'},
+{id:3,name:'Wireless Headphones',category:'Electronics',price:999,emoji:'🎧',image:'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=85',desc:'Music on the go • Demo item'},
+{id:4,name:'Classic Sneakers',category:'Shoes',price:799,emoji:'👟',image:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=85',desc:'Casual comfort • Demo item'},
+{id:5,name:'Cozy Cushion',category:'Home',price:299,emoji:'🛋️',image:'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=800&q=85',desc:'A cosy home touch'},
+{id:6,name:'Minimal Watch',category:'Accessories',price:699,emoji:'⌚',image:'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=85',desc:'Simple everyday design'},
+{id:7,name:'Purple Hoodie',category:'Fashion',price:649,emoji:'🧥',image:'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=85',desc:'Comfy fit • Demo item'},
+{id:8,name:'Skincare Essentials',category:'Beauty',price:449,emoji:'🧴',image:'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=85',desc:'Daily-care set • Demo item'}];
+let category='All',cart={};
+let orders=[];
+try { cart = JSON.parse(localStorage.getItem('iconicCart') || '{}'); } catch(e) { cart = {}; }
+try { orders = JSON.parse(localStorage.getItem('iconicOrders') || '[]'); } catch(e) { orders = []; }
+function saveCart(){try{localStorage.setItem('iconicCart',JSON.stringify(cart));}catch(e){}}
+const money=n=>'₹'+n.toLocaleString('en-IN');
+function renderCats(){document.getElementById('cats').innerHTML=categories.map(([n,e])=>`<button class="cat" onclick="setCategory('${n}')"><span class="emoji">${e}</span><span>${n}</span></button>`).join('')}
+function renderProducts(){let q=document.getElementById('search').value.toLowerCase();let list=items.filter(p=>(category==='All'||p.category===category)&&(p.name+' '+p.category+' '+p.desc).toLowerCase().includes(q));document.getElementById('productHeading').textContent=category==='All'?'Popular picks':category+' picks';document.getElementById('count').textContent=list.length+' items';document.getElementById('products').innerHTML=list.length?list.map(p=>`<article class="product"><div class="pic"><img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.remove();this.parentElement.textContent='${p.emoji}'"></div><div class="pinfo"><div class="pname">${p.name}</div><div class="desc">${p.desc}</div><div class="price-row"><span class="price">${money(p.price)}</span><button class="add" onclick="addCart(${p.id})">+ Add</button></div></div></article>`).join(''):'<div class="empty">No products found.</div>'}
+function setCategory(c){category=c;showPage('home');renderProducts()}
+function addCart(id){cart[id]=(cart[id]||0)+1;saveCart();updateCart();const b=document.getElementById('navCart');b.textContent=Object.values(cart).reduce((a,b)=>a+b,0);const old=document.getElementById('cartToast');if(old)old.remove();const toast=document.createElement('div');toast.id='cartToast';toast.textContent='✓ Added to cart';toast.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:20;background:#241b35;color:white;padding:11px 18px;border-radius:30px;box-shadow:0 4px 18px #0002';document.body.appendChild(toast);setTimeout(()=>toast.remove(),1600)}
+function updateCart(){let entries=Object.entries(cart).filter(([id,n])=>n>0);document.getElementById('cartCount').textContent=entries.reduce((s,[id,n])=>s+n,0)+' items';document.getElementById('cartItems').innerHTML=entries.length?entries.map(([id,n])=>{let p=items.find(x=>x.id==id);return `<div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)"><img class="cart-thumb" src="${p.image}" alt="${p.name}" onerror="this.style.display='none'"><div style="flex:1"><b>${p.name}</b><div class="hint">${money(p.price)} each</div><div style="display:flex;gap:10px;align-items:center;margin-top:7px"><button onclick="changeQty(${id},-1)">−</button>${n}<button onclick="changeQty(${id},1)">+</button></div></div><b>${money(p.price*n)}</b></div>`}).join(''):'<div class="empty">🛒<p>Your cart is empty.</p>Add something you like!</div>';let total=entries.reduce((s,[id,n])=>s+items.find(x=>x.id==id).price*n,0);document.getElementById('cartTotal').innerHTML=entries.length?`<div style="display:flex;justify-content:space-between;padding:18px 0;font-size:18px"><b>Total</b><b>${money(total)}</b></div><div class="notice">UPI only • Demo checkout. Real payment is not connected yet.</div><button class="primary" onclick="startCheckout()">Continue to checkout</button>`:''}
+function changeQty(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];saveCart();updateCart();document.getElementById('navCart').textContent=Object.values(cart).reduce((a,b)=>a+b,0)}
+function showPage(page){['home','cartPage','ordersPage','accountPage','checkoutPage'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==page));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));if(page==='cartPage')updateCart();if(page==='ordersPage')renderOrders();if(page==='checkoutPage')renderCheckoutSummary();window.scrollTo(0,0)}
+function startCheckout(){if(!Object.keys(cart).length){alert('Your cart is empty. Add a product first.');return;}showPage('checkoutPage');}
+function cartEntries(){return Object.entries(cart).filter(([id,n])=>n>0).map(([id,n])=>({product:items.find(p=>p.id==id),qty:n})).filter(x=>x.product);}
+function cartTotal(){return cartEntries().reduce((sum,x)=>sum+x.product.price*x.qty,0);}
+function renderCheckoutSummary(){
+ const el=document.getElementById('checkoutSummary');if(!el)return;
+ const total=cartTotal();
+ const upiUrl='upi://pay?pa='+encodeURIComponent(UPI_ID)+'&pn='+encodeURIComponent(UPI_NAME)+'&am='+encodeURIComponent(total.toFixed(2))+'&cu=INR&tn='+encodeURIComponent('ICONIC SHOP order');
+ el.innerHTML='<div style="display:flex;justify-content:space-between;padding:16px 0;font-size:18px"><b>Order total</b><b>'+money(total)+'</b></div><div style="border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center;margin:8px 0 14px"><h3 style="margin:0 0 8px">Pay '+money(total)+' by UPI</h3><p class="hint" style="margin:0 0 12px">Scan with Google Pay, PhonePe or Paytm</p><div id="upiQr" style="display:flex;justify-content:center;min-height:210px;align-items:center"></div><p style="font-size:13px;margin:12px 0 4px">UPI ID: <b>'+UPI_ID+'</b></p><a id="upiPayLink" class="primary" style="display:block;text-decoration:none" href="'+upiUrl+'">Open UPI app • '+money(total)+'</a></div><div class="notice">QR amount is calculated from your cart total. Your UPI app may allow the payer to edit it. This website cannot confirm payment yet, so this is not a verified checkout.</div>';
+ const qrBox=document.getElementById('upiQr');
+ if(window.QRCode){new QRCode(qrBox,{text:upiUrl,width:210,height:210,colorDark:'#241b35',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});}
+ else{qrBox.innerHTML='<p class="hint">QR library could not load. Use the Open UPI app button instead.</p>';}
+}
+async function placeDemoOrder(event){
+ event.preventDefault();
+ const entries=cartEntries();
+ if(!entries.length){alert('Your cart is empty. Add a product first.');showPage('cartPage');return;}
+ const phone=document.getElementById('customerPhone').value.trim();
+ if(!/^[6-9]\d{9}$/.test(phone)){alert('Please enter a valid 10-digit Indian mobile number.');return;}
+ const ref=document.getElementById('paymentRef').value.trim();
+ if(ref.length<6){alert('Please enter the UPI transaction reference after payment.');return;}
+ const order={
+  id:'IC'+Date.now().toString().slice(-8),
+  date:new Date().toLocaleString('en-IN'),
+  name:document.getElementById('customerName').value.trim(),
+  phone,
+  address:document.getElementById('customerAddress').value.trim(),
+  payment:document.getElementById('paymentMethod').value,
+  paymentRef:ref,
+  total:cartTotal(),
+  items:entries.map(x=>({id:x.product.id,name:x.product.name,price:x.product.price,qty:x.qty})),
+  status:'PENDING — verify payment manually'
+ };
+ const btn=document.querySelector('#checkoutForm button[type="submit"]');
+ if(btn){btn.disabled=true;btn.textContent='Sending order…';}
+ try{
+  const response=await fetch('/.netlify/functions/telegram-order',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify(order)
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok || !result.ok){
+   throw new Error(result.error || 'Order could not be sent to Telegram.');
+  }
+  orders.unshift(order);
+  try{localStorage.setItem('iconicOrders',JSON.stringify(orders));}catch(e){}
+  alert('Order request sent to ICONIC SHOP on Telegram!\\nOrder ID: '+order.id+'\\nStatus: PENDING — verify payment manually. Please verify the actual payment in your UPI/bank app before shipping.');
+  cart={};saveCart();updateCart();document.getElementById('navCart').textContent='0';
+  document.getElementById('checkoutForm').reset();
+  showPage('ordersPage');
+ }catch(error){
+  alert('Order Telegram par send nahi hua. Please internet/deployment settings check karke dobara try karein. Details: '+error.message);
+ }finally{
+  if(btn){btn.disabled=false;btn.textContent='Submit order for verification';}
+ }
+}
+function renderOrders(){const el=document.getElementById('ordersList');document.getElementById('orderCount').textContent=orders.length+' orders';if(!orders.length){el.innerHTML='<div class="empty">📦<p>No orders yet.</p>Your demo orders will appear here.</div>';return;}el.innerHTML=orders.map(o=>'<article style="border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0"><div style="display:flex;justify-content:space-between;gap:8px"><b>Order #'+o.id+'</b><span class="pill">'+o.status+'</span></div><div class="hint" style="margin:7px 0">'+o.date+'</div>'+o.items.map(i=>'<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0"><span>'+i.name+' × '+i.qty+'</span><b>'+money(i.price*i.qty)+'</b></div>').join('')+'<hr style="border:0;border-top:1px solid var(--line)"><div><b>Total: '+money(o.total)+'</b></div><div class="hint" style="margin-top:8px">Deliver to: '+escapeText(o.name)+' • '+escapeText(o.phone)+'<br>'+escapeText(o.address)+'<br>'+escapeText(o.payment)+'<br>UPI reference: '+escapeText(o.paymentRef||'Not entered')+'<br><b>Verify payment in your UPI/bank app before fulfilling.</b></div></article>').join('');}
+function escapeText(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function demoLogin(){let p=document.getElementById('phone').value;document.getElementById('loginMsg').textContent=/^[6-9]\d{9}$/.test(p)?'Demo only: number format looks valid. No OTP was sent.':'Please enter a valid 10-digit Indian mobile number.'}
+document.getElementById('search').addEventListener('input',renderProducts);document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));document.getElementById('checkoutForm').addEventListener('submit',placeDemoOrder);renderCats();renderProducts();updateCart();document.getElementById('navCart').textContent=Object.values(cart).reduce((a,b)=>a+b,0);
+</script></body></html>
