@@ -13,7 +13,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const token = process.env.8843674495:TELEGRAM_BOT_TOKEN;
+  const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) {
