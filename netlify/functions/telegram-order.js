@@ -1,5 +1,6 @@
 
 const { getStore } = require("@netlify/blobs");
+const crypto = require("crypto");
 
 exports.handler = async (event) => {
   const headers = {
