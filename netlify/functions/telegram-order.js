@@ -133,7 +133,7 @@ exports.handler = async (event) => {
         session.step = "price";
         await send("3/6 — Price kitni hai? Sirf number bhejo, jaise 499.");
       } else if (session.step === "price") {
-        const price = Number(text.replace(/[₹,\\s]/g, ""));
+        const price = Number(text.replace(/[₹,\s]/g, ""));
         if (!Number.isFinite(price) || price < 0 || price > 10000000) { await send("Valid price bhejo, jaise 499."); return reply(200, { ok: true }); }
         draft.price = price;
         session.step = "sizes";
