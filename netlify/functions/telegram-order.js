@@ -77,27 +77,66 @@ exports.handler = async (event) => {
         return reply(200, { ok: true });
       }
       if (text === "/start" || text === "/help") {
-        await send("💜 ICONIC SHOP product manager\n\n/addproduct — upload a product photo and details\n/products — view saved products\n/cancel — cancel current upload");
+        await send("💜 ICONIC SHOP product manager\n\n/addproduct — add a product with photo\n/products — view saved products\n/editproduct — edit a product\n/deleteproduct — delete a product\n/cancel — cancel current action");
         return reply(200, { ok: true });
       }
       if (text === "/products") {
         const catalog = await store.get("catalog", { type: "json" }) || [];
         const lines = catalog.slice(0, 40).map((p, i) => (i + 1) + ". " + p.name + " — ₹" + p.price + " | Stock: " + p.stock);
-        await send(lines.length ? "📦 ICONIC SHOP products\n\n" + lines.join("\n") : "No products saved yet. Send /addproduct to add your first product.");
+        await send(lines.length ? "📦 ICONIC SHOP products\n\n" + lines.join("\n") + "\n\nEdit: /editproduct\nDelete: /deleteproduct" : "No products saved yet. Send /addproduct to add your first product.");
         return reply(200, { ok: true });
       }
       if (text === "/addproduct") {
         await store.setJSON(stateKey, { step: "photo", draft: {} });
-        await send("📸 Send the product photo now.\n\nTip: send a clear photo. Send /cancel anytime to stop.");
+        await send("📸 Send the product photo now using 📎 → Gallery.\n\nThen I’ll ask name, category, price, sizes, colours and stock. Send /cancel to stop.");
+        return reply(200, { ok: true });
+      }
+      if (text === "/editproduct") {
+        const catalog = await store.get("catalog", { type: "json" }) || [];
+        if (!catalog.length) { await send("Abhi koi products saved nahi hain. /addproduct bhejo."); return reply(200, { ok: true }); }
+        await store.setJSON(stateKey, { step: "edit_select", draft: {} });
+        await send("✏️ Kaunsa product edit karna hai?\n\n" + catalog.slice(0,40).map((p,i)=>(i+1)+". "+p.name+" — ₹"+p.price).join("\n") + "\n\nSirf uska number bhejo.");
+        return reply(200, { ok: true });
+      }
+      if (text === "/deleteproduct") {
+        const catalog = await store.get("catalog", { type: "json" }) || [];
+        if (!catalog.length) { await send("Abhi koi products saved nahi hain."); return reply(200, { ok: true }); }
+        await store.setJSON(stateKey, { step: "delete_select", draft: {} });
+        await send("🗑️ Kaunsa product delete karna hai?\n\n" + catalog.slice(0,40).map((p,i)=>(i+1)+". "+p.name+" — ₹"+p.price).join("\n") + "\n\nSirf uska number bhejo.");
         return reply(200, { ok: true });
       }
       let session = await store.get(stateKey, { type: "json" });
       if (!session) return reply(200, { ok: true });
       const draft = session.draft || {};
+      if (session.step === "edit_select" || session.step === "delete_select") {
+        const catalog = await store.get("catalog", { type: "json" }) || [];
+        const number = Number(text);
+        if (!Number.isInteger(number) || number < 1 || number > Math.min(catalog.length, 40)) {
+          await send("List mein se valid product number bhejo, ya /cancel karo.");
+          return reply(200, { ok: true });
+        }
+        const selected = catalog[number - 1];
+        if (session.step === "delete_select") {
+          await store.setJSON("catalog", catalog.filter(p => p.id !== selected.id));
+          await store.delete(stateKey);
+          await send("🗑️ Deleted: " + selected.name + "\n\nWebsite refresh karke check kar sakti ho.");
+          return reply(200, { ok: true });
+        }
+        session = { step: "photo", draft: { ...selected, editing: true } };
+        await store.setJSON(stateKey, session);
+        await send("✏️ Editing: " + selected.name + "\n\nNayi photo bhejo, ya purani photo rakhne ke liye KEEP likho.");
+        return reply(200, { ok: true });
+      }
       if (session.step === "photo") {
         const photos = Array.isArray(msg.photo) ? msg.photo : [];
+        if (!photos.length && session.draft?.editing && /^keep$/i.test(text)) {
+          session.step = "name";
+          await store.setJSON(stateKey, session);
+          await send("Photo same rahegi.\n\n1/6 — Product ka naam kya hai?");
+          return reply(200, { ok: true });
+        }
         if (!photos.length) {
-          await send("Please send the product photo using Telegram's 📎 attachment button. Or send /cancel.");
+          await send("Product photo 📎 attachment button → Gallery se bhejo. Existing photo rakhni hai to KEEP likho. /cancel se stop kar sakti ho.");
           return reply(200, { ok: true });
         }
         const photo = photos[photos.length - 1];
@@ -109,10 +148,9 @@ exports.handler = async (event) => {
           await send("Photo is too large. Please send a smaller image (under 8 MB).");
           return reply(200, { ok: true });
         }
-        const id = crypto.randomUUID();
-        const imageKey = id + ".jpeg";
+        const imageKey = crypto.randomUUID() + ".jpeg";
         await store.set(imageKey, bytes, { metadata: { contentType: "image/jpeg" } });
-        draft.id = id;
+        draft.id = draft.id || crypto.randomUUID();
         draft.image = "/.netlify/functions/product-image?id=" + encodeURIComponent(imageKey);
         session = { step: "name", draft };
         await store.setJSON(stateKey, session);
