@@ -1,4 +1,6 @@
 
+const { getStore } = require("@netlify/blobs");
+
 exports.handler = async (event) => {
   const headers = {
     "Content-Type": "application/json",
@@ -56,6 +58,109 @@ exports.handler = async (event) => {
       body = JSON.parse(event.body || "{}");
     } catch {
       return reply(400, { ok: false, error: "Invalid JSON" });
+    }
+
+
+    // Telegram owner product-management chat flow
+    if (body.message || body.edited_message) {
+      const msg = body.message || body.edited_message;
+      const chat = msg.chat;
+      if (!chat || String(chat.id) !== String(chatId)) return reply(200, { ok: true });
+      const store = getStore("iconic-shop-products");
+      const stateKey = "telegram-product-session-" + String(chat.id);
+      const text = String(msg.text || msg.caption || "").trim();
+      const send = async (messageText) => telegram("sendMessage", { chat_id: chat.id, text: messageText });
+      if (text === "/cancel") {
+        await store.delete(stateKey);
+        await send("❎ Product upload cancelled. Start again with /addproduct.");
+        return reply(200, { ok: true });
+      }
+      if (text === "/start" || text === "/help") {
+        await send("💜 ICONIC SHOP product manager\n\n/addproduct — upload a product photo and details\n/products — view saved products\n/cancel — cancel current upload");
+        return reply(200, { ok: true });
+      }
+      if (text === "/products") {
+        const catalog = await store.get("catalog", { type: "json" }) || [];
+        const lines = catalog.slice(0, 40).map((p, i) => (i + 1) + ". " + p.name + " — ₹" + p.price + " | Stock: " + p.stock);
+        await send(lines.length ? "📦 ICONIC SHOP products\n\n" + lines.join("\n") : "No products saved yet. Send /addproduct to add your first product.");
+        return reply(200, { ok: true });
+      }
+      if (text === "/addproduct") {
+        await store.setJSON(stateKey, { step: "photo", draft: {} });
+        await send("📸 Send the product photo now.\n\nTip: send a clear photo. Send /cancel anytime to stop.");
+        return reply(200, { ok: true });
+      }
+      let session = await store.get(stateKey, { type: "json" });
+      if (!session) return reply(200, { ok: true });
+      const draft = session.draft || {};
+      if (session.step === "photo") {
+        const photos = Array.isArray(msg.photo) ? msg.photo : [];
+        if (!photos.length) {
+          await send("Please send the product photo using Telegram's 📎 attachment button. Or send /cancel.");
+          return reply(200, { ok: true });
+        }
+        const photo = photos[photos.length - 1];
+        const fileInfo = await telegram("getFile", { file_id: photo.file_id });
+        const fileResponse = await fetch("https://api.telegram.org/file/bot" + token + "/" + fileInfo.result.file_path);
+        if (!fileResponse.ok) throw new Error("Telegram photo download failed");
+        const bytes = Buffer.from(await fileResponse.arrayBuffer());
+        if (!bytes.length || bytes.length > 8 * 1024 * 1024) {
+          await send("Photo is too large. Please send a smaller image (under 8 MB).");
+          return reply(200, { ok: true });
+        }
+        const id = crypto.randomUUID();
+        const imageKey = id + ".jpeg";
+        await store.set(imageKey, bytes, { metadata: { contentType: "image/jpeg" } });
+        draft.id = id;
+        draft.image = "/.netlify/functions/product-image?id=" + encodeURIComponent(imageKey);
+        session = { step: "name", draft };
+        await store.setJSON(stateKey, session);
+        await send("✅ Photo received!\n\n1/6 — Product ka naam kya hai?");
+        return reply(200, { ok: true });
+      }
+      if (!text) {
+        await send("Please reply with text for this step, or send /cancel.");
+        return reply(200, { ok: true });
+      }
+      if (session.step === "name") {
+        if (text.length > 100) { await send("Name 100 characters se chhota rakho. Dobara bhejo."); return reply(200, { ok: true }); }
+        draft.name = text;
+        session.step = "category";
+        await send("2/6 — Category batao (Fashion, Beauty, Electronics, Home, Shoes, Accessories ya Other).");
+      } else if (session.step === "category") {
+        draft.category = text.slice(0, 40);
+        session.step = "price";
+        await send("3/6 — Price kitni hai? Sirf number bhejo, jaise 499.");
+      } else if (session.step === "price") {
+        const price = Number(text.replace(/[₹,\\s]/g, ""));
+        if (!Number.isFinite(price) || price < 0 || price > 10000000) { await send("Valid price bhejo, jaise 499."); return reply(200, { ok: true }); }
+        draft.price = price;
+        session.step = "sizes";
+        await send("4/6 — Sizes bhejo, comma se alag (S, M, L, XL). Agar size nahi hai to Skip bhejo.");
+      } else if (session.step === "sizes") {
+        draft.sizes = /^skip$/i.test(text) ? [] : text.split(",").map(v => v.trim()).filter(Boolean).slice(0, 20);
+        session.step = "colours";
+        await send("5/6 — Colours bhejo, comma se alag (Purple, White). Nahi hain to Skip bhejo.");
+      } else if (session.step === "colours") {
+        draft.colours = /^skip$/i.test(text) ? [] : text.split(",").map(v => v.trim()).filter(Boolean).slice(0, 20);
+        session.step = "stock";
+        await send("6/6 — Kitne pieces stock mein hain? Sirf whole number bhejo, jaise 10.");
+      } else if (session.step === "stock") {
+        const stock = Number(text);
+        if (!Number.isInteger(stock) || stock < 0 || stock > 1000000) { await send("Stock valid whole number mein bhejo, jaise 10."); return reply(200, { ok: true }); }
+        const catalog = await store.get("catalog", { type: "json" }) || [];
+        const product = {
+          id: draft.id, name: draft.name, category: draft.category, desc: "",
+          price: draft.price, stock: stock, sizes: draft.sizes || [], colours: draft.colours || [],
+          emoji: "🛍️", image: draft.image, updatedAt: new Date().toISOString()
+        };
+        await store.setJSON("catalog", [product, ...catalog.filter(p => p.id !== product.id)]);
+        await store.delete(stateKey);
+        await send("🎉 Product website catalogue mein save ho gaya!\n\n📦 " + product.name + "\n💰 ₹" + product.price + "\n🏷️ " + product.category + "\n📏 Sizes: " + (product.sizes.join(", ") || "N/A") + "\n🎨 Colours: " + (product.colours.join(", ") || "N/A") + "\n📊 Stock: " + product.stock + "\n\nWebsite refresh karke check karo. Naya product add karne ke liye /addproduct bhejo.");
+        return reply(200, { ok: true });
+      }
+      await store.setJSON(stateKey, session);
+      return reply(200, { ok: true });
     }
 
     // Handle Telegram Approve / Reject button clicks
