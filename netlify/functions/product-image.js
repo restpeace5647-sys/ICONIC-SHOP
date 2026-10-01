@@ -2,7 +2,7 @@ const { getStore } = require("@netlify/blobs");
 
 exports.handler = async (event) => {
   const key = String(event.queryStringParameters?.id || "");
-  if (!/^[a-f0-9-]{20,80}\\.jpeg$/i.test(key)) {
+  if (!/^[a-f0-9-]{20,80}\.jpeg$/i.test(key)) {
     return { statusCode: 400, headers: { "Cache-Control": "no-store" }, body: "Invalid image id" };
   }
   try {
