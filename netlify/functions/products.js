@@ -36,9 +36,9 @@ exports.handler = async event => {
       return reply(200, { ok: true, products: next });
     }
     if (action !== "save") return reply(400, { ok: false, error: "Unknown action." });
-    const name = clean(body.name, 100), category = clean(body.category, 40), desc = clean(body.desc, 300);
+    const name = clean(body.name, 100), desc = clean(body.desc, 300);
     const price = Number(body.price), stock = Number(body.stock);
-    if (!name || !category || !Number.isFinite(price) || price < 0 || !Number.isInteger(stock) || stock < 0) return reply(400, { ok: false, error: "Enter a name, category, valid price and whole-number stock." });
+    if (!name || !Number.isFinite(price) || price < 0 || !Number.isInteger(stock) || stock < 0) return reply(400, { ok: false, error: "Enter a product name, valid price and whole-number stock." });
     let id = clean(body.id, 80), old = id ? products.find(p => p.id === id) : null;
     if (!id) id = crypto.randomUUID();
     let image = old?.image || "";
@@ -51,7 +51,7 @@ exports.handler = async event => {
       await store.set(key, bytes, { metadata: { contentType: "image/" + match[1] } });
       image = "/.netlify/functions/product-image?id=" + encodeURIComponent(key);
     }
-    const product = { id, name, category, desc, price, stock,
+    const product = { id, name, category: "", desc, price, stock,
       sizes: Array.isArray(body.sizes) ? body.sizes.map(v => clean(v, 20)).filter(Boolean).slice(0, 20) : [],
       colours: Array.isArray(body.colours) ? body.colours.map(v => clean(v, 30)).filter(Boolean).slice(0, 20) : [],
       emoji: clean(body.emoji || "🛍️", 8), image, updatedAt: new Date().toISOString() };
