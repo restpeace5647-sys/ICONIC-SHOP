@@ -1,4 +1,4 @@
-const { getStore } = require("@netlify/blobs");
+const { connectLambda, getStore } = require("@netlify/blobs");
 const crypto = require("crypto");
 
 const headers = { "Content-Type": "application/json", "Cache-Control": "no-store" };
@@ -18,6 +18,7 @@ function isAdmin(event) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 exports.handler = async event => {
+  connectLambda(event);
   if (event.httpMethod === "GET") {
     try { return reply(200, { ok: true, products: await readProducts() }); }
     catch { return reply(500, { ok: false, error: "Catalogue storage is unavailable. Check Netlify deployment and Blobs support." }); }
