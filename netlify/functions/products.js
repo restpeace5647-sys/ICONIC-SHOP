@@ -42,20 +42,24 @@ exports.handler = async event => {
     if (!name || !Number.isFinite(price) || price < 0 || !Number.isInteger(stock) || stock < 0) return reply(400, { ok: false, error: "Enter a product name, valid price and whole-number stock." });
     let id = clean(body.id, 80), old = id ? products.find(p => p.id === id) : null;
     if (!id) id = crypto.randomUUID();
-    let image = old?.image || "";
-    if (body.imageData) {
-      const match = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(body.imageData));
-      if (!match) return reply(400, { ok: false, error: "Use a JPG, PNG or WebP photo." });
+    let images = Array.isArray(old?.images) ? old.images.slice(0, 3) : [];
+    if (!images.length && old?.image) images = [old.image];
+    while (images.length < 3) images.push("");
+    const uploads = [body.imageData1, body.imageData2, body.imageData3];
+    for (let i = 0; i < 3; i++) {
+      if (!uploads[i]) continue;
+      const match = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(uploads[i]));
+      if (!match) return reply(400, { ok: false, error: `Photo ${i + 1}: use a JPG, PNG or WebP photo.` });
       const bytes = Buffer.from(match[2], "base64");
-      if (!bytes.length || bytes.length > 1024 * 1024) return reply(413, { ok: false, error: "Compressed photo must be 1 MB or smaller." });
-      const key = id + "." + match[1];
+      if (!bytes.length || bytes.length > 1024 * 1024) return reply(413, { ok: false, error: `Photo ${i + 1} must be 1 MB or smaller after compression.` });
+      const key = id + "-" + (i + 1) + "." + match[1];
       await store.set(key, bytes, { metadata: { contentType: "image/" + match[1] } });
-      image = "/.netlify/functions/product-image?id=" + encodeURIComponent(key);
+      images[i] = "/.netlify/functions/product-image?id=" + encodeURIComponent(key);
     }
     const product = { id, name, category: "", desc, price, stock,
       sizes: Array.isArray(body.sizes) ? body.sizes.map(v => clean(v, 20)).filter(Boolean).slice(0, 20) : [],
       colours: Array.isArray(body.colours) ? body.colours.map(v => clean(v, 30)).filter(Boolean).slice(0, 20) : [],
-      emoji: clean(body.emoji || "🛍️", 8), image, updatedAt: new Date().toISOString() };
+      emoji: clean(body.emoji || "🛍️", 8), images, image: images[0] || "", updatedAt: new Date().toISOString() };
     const next = old ? products.map(p => p.id === id ? product : p) : [product, ...products];
     await store.setJSON("catalog", next);
     return reply(200, { ok: true, products: next, product });
