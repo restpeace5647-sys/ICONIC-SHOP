@@ -13,27 +13,28 @@ exports.handler = async event => {
     const first = await store.get(id, { type: "arrayBuffer" });
     if (!first) return { statusCode: 404, body: "Image not found" };
 
-    // New 3-photo products use: productId-1.ext, productId-2.ext, productId-3.ext.
-    // Return a small SVG gallery so the existing storefront (which uses one <img>)
-    // can display all three photos without changing the checkout/cart code.
     const match = /^(.*)-1\.(jpeg|png|webp)$/i.exec(id);
     if (match) {
       const base = match[1];
-      const ext = match[2].toLowerCase();
       const photos = [];
       for (let i = 1; i <= 3; i++) {
-        const key = `${base}-${i}.${ext}`;
-        const data = i === 1 ? first : await store.get(key, { type: "arrayBuffer" });
+        let data = null;
+        let ext = null;
+        for (const candidate of ["jpeg", "jpg", "png", "webp"]) {
+          if (candidate === "jpg") continue;
+          const key = `${base}-${i}.${candidate}`;
+          data = i === 1 && candidate === match[2].toLowerCase() ? first : await store.get(key, { type: "arrayBuffer" });
+          if (data) { ext = candidate; break; }
+        }
         if (data) photos.push({ data: Buffer.from(data).toString("base64"), type: typeFor(ext) });
       }
       if (photos.length > 1) {
         const w = 100 / photos.length;
         const images = photos.map((p, i) => `<image href="data:${p.type};base64,${p.data}" x="${i * w}%" y="0" width="${w}%" height="100%" preserveAspectRatio="xMidYMid slice"/>`).join("");
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">${images}</svg>`;
         return {
           statusCode: 200,
-          headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=31536000, immutable" },
-          body: svg
+          headers: { "Content-Type": "image/svg+xml", "Cache-Control": "no-store" },
+          body: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">${images}</svg>`
         };
       }
     }
@@ -42,7 +43,7 @@ exports.handler = async event => {
     return {
       statusCode: 200,
       isBase64Encoded: true,
-      headers: { "Content-Type": typeFor(ext), "Cache-Control": "public, max-age=31536000, immutable" },
+      headers: { "Content-Type": typeFor(ext), "Cache-Control": "no-store" },
       body: Buffer.from(first).toString("base64")
     };
   } catch {
