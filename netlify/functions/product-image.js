@@ -1,20 +1,23 @@
-const { getStore } = require("@netlify/blobs");
+const { connectLambda, getStore } = require("@netlify/blobs");
 
-exports.handler = async (event) => {
-  const key = String(event.queryStringParameters?.id || "");
-  if (!/^[a-f0-9-]{20,80}\.jpeg$/i.test(key)) {
-    return { statusCode: 400, headers: { "Cache-Control": "no-store" }, body: "Invalid image id" };
+exports.handler = async event => {
+  connectLambda(event);
+  const id = String(event.queryStringParameters?.id || "").trim();
+  if (!/^[A-Za-z0-9._-]+\.(jpeg|png|webp)$/i.test(id)) {
+    return { statusCode: 400, body: "Invalid image id" };
   }
   try {
-    const blob = await getStore("iconic-shop-products").get(key, { type: "arrayBuffer" });
-    if (!blob) return { statusCode: 404, headers: { "Cache-Control": "no-store" }, body: "Image not found" };
+    const data = await getStore("iconic-shop-products").get(id, { type: "arrayBuffer" });
+    if (!data) return { statusCode: 404, body: "Image not found" };
+    const ext = id.split(".").pop().toLowerCase();
+    const contentType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
     return {
       statusCode: 200,
-      headers: { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=3600" },
       isBase64Encoded: true,
-      body: Buffer.from(blob).toString("base64")
+      headers: { "Content-Type": contentType, "Cache-Control": "public, max-age=31536000, immutable" },
+      body: Buffer.from(data).toString("base64")
     };
   } catch {
-    return { statusCode: 500, headers: { "Cache-Control": "no-store" }, body: "Image unavailable" };
+    return { statusCode: 500, body: "Could not load image" };
   }
 };
