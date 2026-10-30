@@ -12,7 +12,7 @@ exports.handler = async event => {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return reply(500, { ok: false, error: "TELEGRAM_BOT_TOKEN is missing in Netlify environment variables." });
   const siteUrl = process.env.URL || "https://endearing-cendol-4eaa85.netlify.app";
-  const webhookUrl = siteUrl.replace(/\/$/, "") + "/.netlify/functions/telegram-order";
+  const webhookUrl = siteUrl.replace(/\/$/, "") + "/.netlify/functions/telegram-webhook";
   try {
     const response = await fetch("https://api.telegram.org/bot" + token + "/setWebhook", {
       method: "POST", headers: { "Content-Type": "application/json" },
